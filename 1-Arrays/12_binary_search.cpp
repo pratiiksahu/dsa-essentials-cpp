@@ -1,11 +1,20 @@
 #include <iostream>
 using namespace std;
 
-// return the index for the given element k if present else -1
-int linearSearch(int a[], int n, int k) {
-    for (int i = 0; i < n; i++) {
-        if (a[i] == k) {
-            return i;
+int binarySearch(int a[], int n, int k) {
+    int start = 0;
+    int end = n;
+
+    while (start <= end) {
+        int mid = (start + end) / 2;
+        if (a[mid] == k) {
+            return mid;
+        }
+        else if (a[mid] > k) {
+            end = mid - 1;
+        }
+        else {
+            start = mid + 1;
         }
     }
     return -1;
@@ -19,7 +28,7 @@ int main () {
     cout << "Enter the key : ";
     cin >> key;
 
-    int index = linearSearch(a, n, key);
+    int index = binarySearch(a, n, key);
     if (index != -1) {
         cout << key << " is present at index " << index << endl;
     }
