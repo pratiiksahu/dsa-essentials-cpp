@@ -17,6 +17,10 @@ int subarraySumBrutForce(int a[], int n) {
     return largestSum;
 }
 
+void subarraysumPrefix(int a[], int n) {
+    
+}
+
 int main() {
     int a[] = {-2, 3, 4, -1, 5, -12, 6, 1, 3};
     int n = sizeof(a) / sizeof(int);
