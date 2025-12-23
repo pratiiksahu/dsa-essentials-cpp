@@ -2,7 +2,7 @@
 using namespace std;
 
 // Problem : Find the subarry with largest sum
-int subarraySumBrutForce(int a[], int n) {
+int subArraySumBrutForce(int a[], int n) {
     int largestSum = 0;
     for (int i = 0; i < n; i++) {
         for (int j = i; j < n; j++) {
@@ -17,7 +17,7 @@ int subarraySumBrutForce(int a[], int n) {
     return largestSum;
 }
 
-int subarraysumPrefix(int a[], int n) { 
+int subArraySumPrefix(int a[], int n) { 
     int prefixArray[100] = {0};
     int largestSubArraySum = 0;
     int subArraySum = 0;
@@ -35,10 +35,25 @@ int subarraysumPrefix(int a[], int n) {
     return largestSubArraySum;
 }
 
+int subArraySumKadene(int a[], int n) {
+    int currSum, largestSum = 0;
+
+    for (int i = 0; i < n; i++) {
+        currSum = currSum + a[i];
+        // reset current sum if element is negative
+        if (a[i] < 0) {
+            currSum = 0;
+        }
+        largestSum = max(currSum, largestSum);
+    }
+    return largestSum;
+}
+
 int main() {
     int a[] = {-2, 3, 4, -1, 5, -12, 6, 1, 3};
     int n = sizeof(a) / sizeof(int);
-    cout << "Largest Sub Array Sum using BruteForce Approach : " << subarraySumBrutForce(a, n) << endl;
-    cout << "Largest Sub Array Sum using Prefix Array Approach : " << subarraysumPrefix(a, n) << endl;
+    cout << "Largest Sub Array Sum using BruteForce Approach : " << subArraySumBrutForce(a, n) << endl;
+    cout << "Largest Sub Array Sum using Prefix Array Approach : " << subArraySumPrefix(a, n) << endl;
+    cout << "Largest Sub Array Sum using Kadene's Approach : " << subArraySumPrefix(a, n) << endl;
     return 0;
 }
