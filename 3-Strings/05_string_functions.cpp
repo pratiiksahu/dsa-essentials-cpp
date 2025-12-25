@@ -13,5 +13,14 @@ int main() {
 
     cout << strcmp(a, b) << endl;
 
+    char web[] = "www.";
+    char domain[] = "dsa-essentials.com";
+
+    strcpy(b, strcat(web, domain));
+
+    cout << b << endl;
+
+    cout << strcmp(a, b) << endl;
+
     return 0;
 }

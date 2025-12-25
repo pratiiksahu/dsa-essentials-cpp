@@ -28,6 +28,7 @@ int main() {
 
     cout << "X & Y co-ordinates are : " << x << ", " << y << endl;
 
+    // @todo : Update the shortest path for all quadrents
     if (x > 0 and y > 0) {
         while (x > 0) {
             cout << "E";
