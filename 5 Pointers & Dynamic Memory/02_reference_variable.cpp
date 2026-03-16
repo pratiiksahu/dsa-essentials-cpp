@@ -16,5 +16,5 @@ int main() {
    float income = 100000;
    applyTax(&income);
 
-   cout << income << endl;
+   cout << "Income: " << income << endl;
 }
