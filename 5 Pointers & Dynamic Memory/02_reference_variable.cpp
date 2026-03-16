@@ -14,7 +14,8 @@ void applyTax(float *income) {
 
 int main() {
    float income = 100000;
-   applyTax(&income);
+   applyTax(income);  // reference
+   applyTax(&income); // pointer
 
    cout << income << endl;
 }
