@@ -114,6 +114,60 @@ Target: main (or specify target branch)
 Draft: [true/false]
 ```
 
+### Smart PR Detection Logic
+
+The agent **automatically detects** if a PR already exists on the current branch:
+
+```bash
+# Check if PR exists on current branch
+gh pr view <current-branch> 2>/dev/null
+
+# If PR exists → Just push new commits
+if [ $? -eq 0 ]; then
+  git push
+  echo "✅ Pushed commits to existing PR"
+else
+  # If no PR exists → Create new PR
+  gh pr create --title "..." --body "..." --base main
+  echo "✅ Created new PR"
+fi
+```
+
+**Key behavior:**
+- ✅ **PR exists on branch** → `git push` (updates existing PR with new commits)
+- ✅ **No PR on branch** → `gh pr create` (creates new PR)
+- ✅ **Branch doesn't exist** → Can't invoke agent (natural safeguard)
+
+### Multiple PRs Per Topic
+
+You can create **multiple PRs for different learning milestones** within a topic:
+
+```
+Topic: Recursion
+
+PR #1: Basic recursion fundamentals
+├─ Branch: feat/recursion-basics
+├─ Files: factorial, power, fibonacci
+└─ Merge when satisfied
+
+PR #2: Advanced recursion patterns  
+├─ Branch: feat/recursion-advanced
+├─ Files: tree traversal, permutations
+└─ Merge when satisfied
+
+PR #3: Recursion with memoization
+├─ Branch: feat/recursion-optimization
+├─ Files: memoization examples
+└─ Merge when satisfied
+```
+
+**Workflow for multiple PRs:**
+1. Finish learning milestone 1, merge PR #1
+2. **Create NEW branch** for milestone 2
+3. Generate code for milestone 2
+4. Invoke `@pr-agent` → detects no PR → creates PR #2
+5. Repeat for milestone 3+
+
 ### PR Command Template
 
 The agent will use `gh` CLI to create PRs:
@@ -123,7 +177,7 @@ gh pr create \
   --title "Your PR Title" \
   --body "Your PR description" \
   --base main \
-  --head docs/learning-workflow-integration
+  --head <current-branch>
 ```
 
 **Options:**
@@ -132,30 +186,70 @@ gh pr create \
 - `--label "documentation"` — Add labels
 - `--reviewer` — Request specific reviewers
 
-### Example PR Creation
+### Example PR Creation Flow
 
+#### First Milestone:
 ```
 @pr-agent
-Branch: docs/learning-workflow-integration
-Title: Add learning workflow integration
+Branch: feat/recursion-basics
+Title: Add recursion fundamentals
 Description: |
-  Adds LEARNING_WORKFLOW.md documenting the code generation and note-taking pipeline.
-  Includes two-agent approach for fast-tracked DSA learning.
+  Implements basic recursion concepts with factorial, power, and fibonacci examples.
   
-  - New file: LEARNING_WORKFLOW.md
-  - Updated: AGENTS.md with workflow reference
-  - Updated: .gitignore to exclude copy-notes-to-notion.md
+  - 01_factorial_recursion.cpp
+  - 02_power_function.cpp
+  - 03_fibonacci_recursive.cpp
 Target: main
 Draft: false
 ```
 
-**Agent output:**
+**Output:** ✅ Creates PR #13
+
+#### Iterate on same PR:
 ```
-✅ PR created: https://github.com/pratiiksahu/dsa-essentials-cpp/pull/X
-Title: Add learning workflow integration
-Base: main
-Head: docs/learning-workflow-integration
+@code-agent
+Topic: Recursion Basics
+New files: Add tree traversal examples
+Folder: 8 Recursion (append)
+
+@commit-agent
+Topic: Recursion Basics (Part 1 continued)
+Files changed: 2 files, 150 lines added
+AI generation %: 90
+Notes: Added tree traversal examples to recursion lesson
+
+@pr-agent
+Branch: feat/recursion-basics
+[Smart detection] → PR exists → Just push commits
 ```
+
+**Output:** ✅ Pushes to PR #13 (no new PR created)
+
+#### New Milestone:
+```
+[You create new branch]
+git checkout -b feat/recursion-advanced
+
+@code-agent
+Topic: Recursion Advanced
+New files: Backtracking and optimization
+Folder: 8 Recursion (append)
+
+@commit-agent
+Topic: Recursion Basics (Part 2)
+Files changed: 3 files, 200 lines added
+AI generation %: 85
+Notes: Advanced recursion patterns and backtracking
+
+@pr-agent
+Branch: feat/recursion-advanced
+Title: Add advanced recursion patterns
+Description: Implements backtracking, N-queens, permutations
+Target: main
+Draft: false
+```
+
+**Output:** ✅ Creates new PR #14 (different branch, different PR)
 
 ---
 
