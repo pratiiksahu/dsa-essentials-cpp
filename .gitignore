@@ -29,3 +29,6 @@ Makefile
 # Ignore any environment or user-specific configuration
 *.user
 *.workspace
+
+# Ignore learning notes (for Notion copy-paste)
+copy-notes-to-notion.md
