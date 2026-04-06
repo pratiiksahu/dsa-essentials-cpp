@@ -93,3 +93,11 @@
 - Choose the simplest course-appropriate solution first.
 - State assumptions briefly.
 - Ask before making large structural changes or adding future-course material out of sequence.
+
+## Learning & Code Generation Workflow
+
+For fast-tracked learning with depth, see **LEARNING_WORKFLOW.md** in the repository root. It documents:
+- How to provide video transcripts for code generation
+- Two-agent approach: one for code, one for notes
+- How `copy-notes-to-notion.md` is generated and managed
+- Progression tracking through the DSA roadmap
