@@ -114,6 +114,84 @@ Target: main (or specify target branch)
 Draft: [true/false]
 ```
 
+### PR Creation Decision Rules
+
+**Before creating/pushing, the agent MUST ask you:**
+
+```
+You're on branch: <branch-name>
+
+What would you like to do?
+1. Push to current branch (updates existing PR or creates new one on same branch)
+2. Create a new PR with a new branch
+```
+
+**If you choose Option 1 (Push):**
+- Check if PR exists on current branch
+- If PR exists → `git push` (updates existing PR)
+- If no PR exists → `gh pr create` (creates PR on current branch)
+- Stay on same branch
+
+**If you choose Option 2 (New PR with New Branch):**
+- Prompt for new branch name
+- Create new branch: `git checkout -b <new-branch-name>`
+- Create PR on new branch: `gh pr create ...`
+- **Switch IDE to new branch** (agent notifies you to switch)
+- Current branch becomes available for other work
+
+### Smart PR Detection Logic
+
+```bash
+# Check if PR exists on current branch
+gh pr view <current-branch> 2>/dev/null
+
+# If PR exists → Just push
+if [ $? -eq 0 ]; then
+  git push
+  echo "✅ Pushed commits to existing PR"
+else
+  # If no PR exists → Create new PR
+  gh pr create --title "..." --body "..." --base main
+  echo "✅ Created new PR on current branch"
+fi
+```
+
+**Key behavior:**
+- ✅ **PR exists on branch** → `git push` (updates existing PR with new commits)
+- ✅ **No PR on branch** → `gh pr create` (creates new PR on same branch)
+- ✅ **User wants new branch** → Create branch, create PR, switch IDE to new branch
+
+### Multiple PRs Per Topic
+
+You can create **multiple PRs for different learning milestones** within a topic:
+
+```
+Topic: Recursion
+
+PR #1: Basic recursion fundamentals
+├─ Branch: feat/recursion-basics
+├─ Files: factorial, power, fibonacci
+└─ Merge when satisfied
+
+PR #2: Advanced recursion patterns  
+├─ Branch: feat/recursion-advanced
+├─ Files: tree traversal, permutations
+└─ Merge when satisfied
+
+PR #3: Recursion with memoization
+├─ Branch: feat/recursion-optimization
+├─ Files: memoization examples
+└─ Merge when satisfied
+```
+
+**Workflow for multiple PRs:**
+1. Finish learning milestone 1, merge PR #1
+2. **Invoke @pr-agent** → Choose "Create new PR with new branch"
+3. Agent creates `feat/recursion-advanced` branch
+4. Generate code for milestone 2
+5. Commit and invoke @pr-agent → Choose "Push to current branch" (updates PR #2)
+6. Repeat for milestone 3+
+
 ### PR Command Template
 
 The agent will use `gh` CLI to create PRs:
@@ -123,7 +201,7 @@ gh pr create \
   --title "Your PR Title" \
   --body "Your PR description" \
   --base main \
-  --head docs/learning-workflow-integration
+  --head <current-branch>
 ```
 
 **Options:**
@@ -132,29 +210,67 @@ gh pr create \
 - `--label "documentation"` — Add labels
 - `--reviewer` — Request specific reviewers
 
-### Example PR Creation
+### Example PR Creation Flow
 
+#### First Milestone (Option 1: Push):
 ```
+You're on branch: feat/recursion-basics
+
 @pr-agent
-Branch: docs/learning-workflow-integration
-Title: Add learning workflow integration
-Description: |
-  Adds LEARNING_WORKFLOW.md documenting the code generation and note-taking pipeline.
-  Includes two-agent approach for fast-tracked DSA learning.
-  
-  - New file: LEARNING_WORKFLOW.md
-  - Updated: AGENTS.md with workflow reference
-  - Updated: .gitignore to exclude copy-notes-to-notion.md
+Title: Add recursion fundamentals
+Description: Implements basic recursion with factorial, power, fibonacci
 Target: main
 Draft: false
 ```
 
-**Agent output:**
+**Agent prompts:**
 ```
-✅ PR created: https://github.com/pratiiksahu/dsa-essentials-cpp/pull/X
-Title: Add learning workflow integration
-Base: main
-Head: docs/learning-workflow-integration
+What would you like to do?
+1. Push to current branch
+2. Create a new PR with a new branch
+
+You choose: 1
+```
+
+**Output:** ✅ Creates PR #13 on feat/recursion-basics
+
+#### Iterate on same PR (Option 1: Push):
+```
+[You add more code and commit]
+
+@pr-agent
+(on same branch: feat/recursion-basics)
+
+You choose: 1 (Push to current branch)
+```
+
+**Output:** ✅ Pushes to PR #13 (no new PR created)
+
+#### New Milestone (Option 2: New Branch):
+```
+@pr-agent
+Title: Add advanced recursion patterns
+Description: Implements backtracking, N-queens, permutations
+Target: main
+Draft: false
+```
+
+**Agent prompts:**
+```
+What would you like to do?
+1. Push to current branch (feat/recursion-basics)
+2. Create a new PR with a new branch
+
+You choose: 2
+
+Enter new branch name: feat/recursion-advanced
+```
+
+**Output:**
+```
+✅ Created branch: feat/recursion-advanced
+✅ Created PR #14 on feat/recursion-advanced
+🔄 Please switch IDE to branch: feat/recursion-advanced
 ```
 
 ---
@@ -167,40 +283,142 @@ git checkout -b docs/my-new-feature
 ```
 
 ### Step 2: Generate Code & Notes (Code Agent + Notes Agent)
-- Provide transcript
+- Provide transcript or content summary
 - Agents generate `.cpp` files and `copy-notes-to-notion.md`
+- Review generated code locally
+- Test compilation: `g++ -std=c++17 -Wall -Wextra -pedantic "file.cpp" -o /tmp/test`
 
 ### Step 3: Commit Changes (Commit Agent)
+Once you're satisfied with generated code:
+
 ```
 @commit-agent
-Topic: My New Feature
-Files changed: New folder "7 Recursion" with 4 lesson files
+Topic: Recursion Basics
+Files changed: 8 Recursion/ +4 new files
 AI generation %: 85
-Human input %: 15
-Notes: Generated from video transcript, compiled and tested successfully
+Notes: Generated from Udemy transcript, compiled and tested successfully
 ```
 
-Agent creates commit with precise message and AI% tracking.
+Agent creates commit with:
+- Precise message with conventional commits format
+- File modifications (e.g., `GIT_WORKFLOW.md +78 -45`)
+- AI% tracking only (removed Human Input %)
+- Co-author trailer
 
-### Step 4: Push & Create PR (PR Agent)
+### Step 4: Handle PR (PR Agent) — User Makes Decision
+After committing, invoke PR agent to handle the PR:
+
 ```
 @pr-agent
-Branch: docs/my-new-feature
 Title: Add recursion lesson files
-Description: Implements recursion fundamentals with factorial, fibonacci, and tree examples
+Description: Implements recursion fundamentals with 4 lesson programs
 Target: main
 Draft: false
 ```
 
-Agent creates PR directly using `gh CLI`, no manual GitHub UI interaction needed.
+**Agent prompts you:**
+```
+You're on branch: feat/recursion-basics
 
-### Step 5: Merge
-Review PR, then:
+What would you like to do?
+1. Push to current branch (updates existing PR or creates new one)
+2. Create a new PR with a new branch
+```
+
+**Choose Option 1** if:
+- This is your first commit on this branch → Creates new PR
+- You've already created a PR and want to add more commits → Pushes to same PR
+
+**Choose Option 2** if:
+- You've completed a learning milestone and want to start a new one
+- You want a separate PR for a different phase/topic
+- Agent creates new branch and switches IDE automatically
+
+### Step 5: Merge When Ready
+Review PR, then merge:
 ```bash
 gh pr merge <PR_NUMBER> --squash
 ```
 
 ---
+
+## Complete Example: Multi-Phase Learning Cycle
+
+**Phase 1: Basic Recursion (Milestone 1)**
+```
+git checkout -b feat/recursion-basics
+
+@code-agent 
+Topic: Recursion Basics
+Transcript: [video content]
+Folder: 8 Recursion (new)
+
+@commit-agent
+Topic: Recursion Basics
+Files changed: 8 Recursion/ +4 files
+AI generation %: 85
+
+@pr-agent
+Title: Add recursion fundamentals
+You choose: Option 1 → Creates PR #13
+```
+
+**Phase 1: Iterate (Add More Examples)**
+```
+[Still on feat/recursion-basics]
+
+@code-agent
+Topic: Recursion Basics (continued)
+Add: Tree traversal examples
+Folder: 8 Recursion (append)
+
+@commit-agent
+Topic: Recursion Basics (Part 1 continued)
+Files changed: 8 Recursion/ +2 files
+AI generation %: 90
+
+@pr-agent
+You choose: Option 1 → Pushes to PR #13 (no new PR created)
+```
+
+**Phase 1: Complete & Merge**
+```
+[Satisfied with phase 1]
+
+gh pr merge 13 --squash
+[Deletes feat/recursion-basics branch]
+```
+
+**Phase 2: Advanced Recursion (Milestone 2)**
+```
+@pr-agent
+Title: Add advanced recursion patterns
+Description: Backtracking, N-queens, permutations
+Target: main
+
+You choose: Option 2 → Enter branch name: feat/recursion-advanced
+Agent creates branch and switches IDE to feat/recursion-advanced
+
+@code-agent
+Topic: Advanced Recursion
+Transcript: [video content]
+Folder: 8 Recursion (append)
+
+@commit-agent
+Topic: Advanced Recursion
+Files changed: 8 Recursion/ +3 files
+AI generation %: 85
+
+@pr-agent
+You choose: Option 1 → Creates PR #14
+```
+
+**Phase 2: Complete & Merge**
+```
+[Satisfied with phase 2]
+
+gh pr merge 14 --squash
+```
 
 ## AI Generation % Guidelines
 
