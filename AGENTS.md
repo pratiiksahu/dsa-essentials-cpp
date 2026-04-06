@@ -109,3 +109,37 @@ For commit and PR creation agents, see **GIT_WORKFLOW.md**. It documents:
 - PR Agent: direct PR creation using `gh` CLI
 - Commit message format with AI% indicators
 - Examples and best practices
+
+---
+
+## Quick Reference: Workflows & Documents
+
+| Document | Purpose | Key Content |
+|----------|---------|-------------|
+| **AGENTS.md** | Master guidelines for repo | Do's/Don'ts, conventions, code style, build commands |
+| **LEARNING_WORKFLOW.md** | Code + notes generation | @code-agent, @notes-agent, copy-notes-to-notion.md workflow |
+| **GIT_WORKFLOW.md** | Commit + PR workflow | @commit-agent, @pr-agent, user choice rules, examples |
+| **.github/copilot-instructions.md** | Copilot IDE entry point | Build commands, architecture, conventions (quick reference) |
+
+### Agents Available
+
+| Agent | Invocation | Purpose | Output |
+|-------|-----------|---------|--------|
+| **Code Generation** | @code-agent | Generate `.cpp` files from transcript | Standalone lesson files in appropriate folder |
+| **Notes Generation** | @notes-agent | Generate learning notes from transcript | `copy-notes-to-notion.md` (Notion-ready) |
+| **Commit** | @commit-agent | Create precise commits with AI% tracking | Git commit with file modifications, AI%, co-author |
+| **PR** | @pr-agent | Create/push PRs with smart detection | Prompts user: Option 1 (Push) or Option 2 (New Branch) |
+
+### Standard Workflow Order
+
+```
+Watch Video → @code-agent → @notes-agent → Test Locally → @commit-agent → @pr-agent → Merge
+```
+
+### User Choice Point
+
+When invoking **@pr-agent**, you always choose:
+- **Option 1:** Push to current branch (updates existing PR or creates new one)
+- **Option 2:** Create new PR with new branch (requires IDE switch)
+
+No PR is created without your explicit choice.
