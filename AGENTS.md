@@ -101,3 +101,11 @@ For fast-tracked learning with depth, see **LEARNING_WORKFLOW.md** in the reposi
 - Two-agent approach: one for code, one for notes
 - How `copy-notes-to-notion.md` is generated and managed
 - Progression tracking through the DSA roadmap
+
+## Git Commit & PR Workflow
+
+For commit and PR creation agents, see **GIT_WORKFLOW.md**. It documents:
+- Commit Agent: precise messages with AI-generation tracking
+- PR Agent: direct PR creation using `gh` CLI
+- Commit message format with AI% indicators
+- Examples and best practices
