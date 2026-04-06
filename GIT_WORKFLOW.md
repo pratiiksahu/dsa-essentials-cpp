@@ -114,29 +114,52 @@ Target: main (or specify target branch)
 Draft: [true/false]
 ```
 
-### Smart PR Detection Logic
+### PR Creation Decision Rules
 
-The agent **automatically detects** if a PR already exists on the current branch:
+**Before creating/pushing, the agent MUST ask you:**
+
+```
+You're on branch: <branch-name>
+
+What would you like to do?
+1. Push to current branch (updates existing PR or creates new one on same branch)
+2. Create a new PR with a new branch
+```
+
+**If you choose Option 1 (Push):**
+- Check if PR exists on current branch
+- If PR exists → `git push` (updates existing PR)
+- If no PR exists → `gh pr create` (creates PR on current branch)
+- Stay on same branch
+
+**If you choose Option 2 (New PR with New Branch):**
+- Prompt for new branch name
+- Create new branch: `git checkout -b <new-branch-name>`
+- Create PR on new branch: `gh pr create ...`
+- **Switch IDE to new branch** (agent notifies you to switch)
+- Current branch becomes available for other work
+
+### Smart PR Detection Logic
 
 ```bash
 # Check if PR exists on current branch
 gh pr view <current-branch> 2>/dev/null
 
-# If PR exists → Just push new commits
+# If PR exists → Just push
 if [ $? -eq 0 ]; then
   git push
   echo "✅ Pushed commits to existing PR"
 else
   # If no PR exists → Create new PR
   gh pr create --title "..." --body "..." --base main
-  echo "✅ Created new PR"
+  echo "✅ Created new PR on current branch"
 fi
 ```
 
 **Key behavior:**
 - ✅ **PR exists on branch** → `git push` (updates existing PR with new commits)
-- ✅ **No PR on branch** → `gh pr create` (creates new PR)
-- ✅ **Branch doesn't exist** → Can't invoke agent (natural safeguard)
+- ✅ **No PR on branch** → `gh pr create` (creates new PR on same branch)
+- ✅ **User wants new branch** → Create branch, create PR, switch IDE to new branch
 
 ### Multiple PRs Per Topic
 
@@ -163,10 +186,11 @@ PR #3: Recursion with memoization
 
 **Workflow for multiple PRs:**
 1. Finish learning milestone 1, merge PR #1
-2. **Create NEW branch** for milestone 2
-3. Generate code for milestone 2
-4. Invoke `@pr-agent` → detects no PR → creates PR #2
-5. Repeat for milestone 3+
+2. **Invoke @pr-agent** → Choose "Create new PR with new branch"
+3. Agent creates `feat/recursion-advanced` branch
+4. Generate code for milestone 2
+5. Commit and invoke @pr-agent → Choose "Push to current branch" (updates PR #2)
+6. Repeat for milestone 3+
 
 ### PR Command Template
 
@@ -188,68 +212,66 @@ gh pr create \
 
 ### Example PR Creation Flow
 
-#### First Milestone:
+#### First Milestone (Option 1: Push):
 ```
+You're on branch: feat/recursion-basics
+
 @pr-agent
-Branch: feat/recursion-basics
 Title: Add recursion fundamentals
-Description: |
-  Implements basic recursion concepts with factorial, power, and fibonacci examples.
-  
-  - 01_factorial_recursion.cpp
-  - 02_power_function.cpp
-  - 03_fibonacci_recursive.cpp
+Description: Implements basic recursion with factorial, power, fibonacci
 Target: main
 Draft: false
 ```
 
-**Output:** ✅ Creates PR #13
-
-#### Iterate on same PR:
+**Agent prompts:**
 ```
-@code-agent
-Topic: Recursion Basics
-New files: Add tree traversal examples
-Folder: 8 Recursion (append)
+What would you like to do?
+1. Push to current branch
+2. Create a new PR with a new branch
 
-@commit-agent
-Topic: Recursion Basics (Part 1 continued)
-Files changed: 2 files, 150 lines added
-AI generation %: 90
-Notes: Added tree traversal examples to recursion lesson
+You choose: 1
+```
+
+**Output:** ✅ Creates PR #13 on feat/recursion-basics
+
+#### Iterate on same PR (Option 1: Push):
+```
+[You add more code and commit]
 
 @pr-agent
-Branch: feat/recursion-basics
-[Smart detection] → PR exists → Just push commits
+(on same branch: feat/recursion-basics)
+
+You choose: 1 (Push to current branch)
 ```
 
 **Output:** ✅ Pushes to PR #13 (no new PR created)
 
-#### New Milestone:
+#### New Milestone (Option 2: New Branch):
 ```
-[You create new branch]
-git checkout -b feat/recursion-advanced
-
-@code-agent
-Topic: Recursion Advanced
-New files: Backtracking and optimization
-Folder: 8 Recursion (append)
-
-@commit-agent
-Topic: Recursion Basics (Part 2)
-Files changed: 3 files, 200 lines added
-AI generation %: 85
-Notes: Advanced recursion patterns and backtracking
-
 @pr-agent
-Branch: feat/recursion-advanced
 Title: Add advanced recursion patterns
 Description: Implements backtracking, N-queens, permutations
 Target: main
 Draft: false
 ```
 
-**Output:** ✅ Creates new PR #14 (different branch, different PR)
+**Agent prompts:**
+```
+What would you like to do?
+1. Push to current branch (feat/recursion-basics)
+2. Create a new PR with a new branch
+
+You choose: 2
+
+Enter new branch name: feat/recursion-advanced
+```
+
+**Output:**
+```
+✅ Created branch: feat/recursion-advanced
+✅ Created PR #14 on feat/recursion-advanced
+🔄 Please switch IDE to branch: feat/recursion-advanced
+```
 
 ---
 
