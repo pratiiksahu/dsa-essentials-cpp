@@ -1,5 +1,6 @@
 #include <iostream>
 #include <climits>
+#include <vector>
 using namespace std;
 
 void countingSort(int a[], int n) {
