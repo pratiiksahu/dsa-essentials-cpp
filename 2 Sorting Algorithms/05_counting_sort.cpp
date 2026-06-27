@@ -25,7 +25,7 @@ void countingSort(int a[], int n) {
     // Update the input array by printing occurrences of all elements. This will result in sorted array.
     int j = 0; // Counter for original input array
     for (int i = 0; i < frequency.size(); i++) {
-        while (frequency[i] > 0 and j < n) {
+        while (frequency[i] > 0 && j < n) {
             a[j] = i;
             frequency[i]--;
             j++;
